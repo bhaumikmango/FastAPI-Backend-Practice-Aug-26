@@ -10,9 +10,19 @@ class Post(BaseModel):
     title: str
     content: str
     published: bool = True
-    rating: Optional[int] = None
+    rating: Optional[float] = None
 
 my_posts = [{"id": 1, "title": "title of post 1", "content": "content of post 1"}]
+
+def find_post(id):
+    for p in my_posts:
+        if p['id'] == id:
+            return p
+
+def find_index_post(id):
+    for i, p in enumerate(my_posts):
+        if p['id'] == id:
+            return i
 
 @app.get("/posts")
 def get_posts():
@@ -32,7 +42,7 @@ def create_posts(post: Post):
 
 @app.get("/posts/{id}")
 def get_post(id: int):
-    post = next((p for p in my_posts if p["id"] == id), None)
+    post = find_post(id)
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                             detail=f"post with id: {id} was not found")
@@ -40,8 +50,18 @@ def get_post(id: int):
 
 @app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(id: int):
-    pass
+    a = find_index_post(id)
+    if a == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'post with id:{id} doesn\'t exist')
+    my_posts.pop(a)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 @app.put("/posts/{id}")
 def update_post(id: int, post: Post):
-    pass
+    index = find_index_post(id)
+    if index == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"post with id: {id} was not found")
+    post_dict = post.dict()
+    post_dict['id'] = id
+    my_posts[index] = post_dict
+    return {'Post Updated Successfully':post_dict}
